@@ -1,8 +1,7 @@
-from models import Vehicle
-from linear_models import LinearVehicle
+from model import Vehicle, LinearVehicle
 import numpy as np
-from params import *
 import matplotlib.pyplot as plt
+from config import Config
 
 
 def get_u_accel_brake(t):
@@ -46,48 +45,36 @@ def get_CarSim_v(path):
 
 if __name__ == "__main__":
     tests = ["const_alpha", "accel_brake"]
-    test = tests[0]
-    vehicle = Vehicle(i=5, trans_en=False)
-    linear_vehicle = LinearVehicle()
-    slope = -0*np.pi/180
+    test = tests[1]
+    cfg = Config()
+    vehicle = Vehicle(cfg)
+    linear_vehicle = LinearVehicle(cfg)
+    slope = 0
     T = 30
     t = 0
     vs, lvs = [], []
-    Tes = []  # 发动机转矩
-    wes = []  # 发动机转速
-    wts = []  # 涡轮转速
-    Tps = []  # 泵轮转矩
     while t < T:
-        vs.append(vehicle.v)
-        lvs.append(linear_vehicle.v)
-
+        print(f"\r{format(t, '.2f')}/{format(T, '.2f')}", end='')
         if test == "const_alpha":
             alpha, Pb = get_u_const_alpha(t)
         elif test == "accel_brake":
             alpha, Pb = get_u_accel_brake(t)
-
-        Tes.append(vehicle.engine.get_torque(alpha))
-        wes.append(vehicle.engine.we)
-        wts.append(vehicle.torq_conv.wt)
-        Tp, _ = vehicle.torq_conv.get_torque()
-        Tps.append(Tp)
-
         vehicle.control(alpha, Pb)
-        vehicle.update(slope)
+        vehicle.step(slope)
         linear_vehicle.control(alpha, Pb)
-        linear_vehicle.update(slope)
-
-        t += dt
-
-    ts = np.arange(len(vs))*dt
+        linear_vehicle.step(slope)
+        vs.append(vehicle.v)
+        lvs.append(linear_vehicle.v)
+        t += cfg.const.dt
     vs = np.array(vs)*3.6
     lvs = np.array(lvs)*3.6
+    ts = np.arange(len(vs))*cfg.const.dt
 
     # 读取CarSim仿真数据
     if test == "const_alpha":
-        cs_vs = get_CarSim_v("CarSim_const_alpha_v.txt")
+        cs_vs = get_CarSim_v("data/CarSim_const_alpha_v.txt")
     elif test == "accel_brake":
-        cs_vs = get_CarSim_v("CarSim_accel_brake_v.txt")
+        cs_vs = get_CarSim_v("data/CarSim_accel_brake_v.txt")
 
     # 画图
     # 车速
@@ -98,24 +85,5 @@ if __name__ == "__main__":
     plt.legend()
     plt.xlabel("t/s")
     plt.ylabel("v/(km/h)")
-    plt.title(f"slope = {format(slope*180/np.pi,'.1f')}°")
-
-    # 转矩
-    # plt.figure()
-    # plt.plot(ts, Tes, label="engine output")
-    # # plt.plot(ts, Tps, label="engine input")
-    # plt.plot(ts, lTes, label="linear engine output")
-    # plt.legend()
-    # plt.ylabel("T/Nm")
-
-    # 转速
-    # plt.figure()
-    # wes = np.array(wes) * 60 / (2 * np.pi)
-    # wts = np.array(wts) * 60 / (2 * np.pi)
-    # plt.plot(ts, wes, label="engine")
-    # plt.plot(ts, wts, label="torque converter output")
-    # plt.legend()
-    # plt.ylabel("n/(r/min)")
-
     plt.show()
 

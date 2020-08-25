@@ -31,11 +31,6 @@ class Vehicle:
         self.Kb = self.config.vehicle.Kb
 
     def control(self, alpha, Pb):
-        """
-        :param alpha: 节气门开度
-        :param Pb: 制动压力
-        :return: 限制后的控制量
-        """
         alpha_hi = min(self.config.vehicle.alpha_bounds[1],
                        self.alpha+self.config.vehicle.d_alpha)
         alpha_lo = max(self.config.vehicle.alpha_bounds[0],
@@ -85,6 +80,13 @@ class Vehicle:
 
     def get_control(self):
         return self.alpha, self.Pb
+
+    def set_v(self, v):
+        self.v = v
+
+    def set_control(self, alpha, Pb):
+        self.alpha = alpha
+        self.Pb = Pb
 
 
 if __name__ == '__main__':

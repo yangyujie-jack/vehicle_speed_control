@@ -20,7 +20,8 @@ class Config:
 
         # constants
         self.const = edict()
-        self.const.dt = 0.025  # 仿真步长
+        # self.const.dt = 0.025  # 仿真步长
+        self.const.dt = 0.1
         self.const.g = 9.8
 
         # engine
@@ -99,6 +100,10 @@ class Config:
         self.controller.lqr.R_alpha = 0.1
         self.controller.lqr.R_Pb = self.controller.lqr.R_alpha*\
                                    self.vehicle.alpha_bounds[1]/self.vehicle.Pb_bounds[1]
+
+        # mpc
+        self.controller.mpc = edict()
+        self.controller.mpc.pred_time = 10
 
 
 if __name__ == '__main__':

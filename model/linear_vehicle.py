@@ -1,12 +1,20 @@
 import numpy as np
-from model import Vehicle
 from copy import deepcopy
 
-class LinearVehicle(Vehicle):
+
+class LinearVehicle:
     def __init__(self, config):
-        super(LinearVehicle, self).__init__(config)
+        self.config = config
         self.vehicle_params = np.load(self.config.vehicle.linear_vehicle_params)
         self.fuel_rate_params = np.load(self.config.vehicle.fuel_rate_params)
+        self.v = self.config.vehicle.v  # m/s
+        self.m = self.config.vehicle.m
+        self.Jf = self.config.vehicle.Jf
+        self.Jr = self.config.vehicle.Jr
+        self.r = self.config.vehicle.r
+        self.alpha = self.config.vehicle.alpha
+        self.Pb = self.config.vehicle.Pb
+        self.Kb = self.config.vehicle.Kb
 
     def get_vehicle_param(self, slope, alpha):
         """
@@ -51,12 +59,31 @@ class LinearVehicle(Vehicle):
         param = self.fuel_rate_params[alpha_range_i, v_range_i]
         return param
 
+    def control(self, alpha, Pb):
+        alpha_hi = min(self.config.vehicle.alpha_bounds[1],
+                       self.alpha+self.config.vehicle.d_alpha)
+        alpha_lo = max(self.config.vehicle.alpha_bounds[0],
+                       self.alpha-self.config.vehicle.d_alpha)
+        Pb_hi = min(self.config.vehicle.Pb_bounds[1],
+                    self.Pb+self.config.vehicle.d_Pb)
+        Pb_lo = max(self.config.vehicle.Pb_bounds[0],
+                    self.Pb-self.config.vehicle.d_Pb)
+        self.alpha = np.clip(alpha, alpha_lo, alpha_hi)
+        self.Pb = np.clip(Pb, Pb_lo, Pb_hi)
+
     def step(self, slope=0):
         Kvs = self.get_vehicle_param(slope, self.alpha)
         acc = Kvs[0]*self.v+Kvs[1]*self.alpha+Kvs[2]-self.Kb*self.Pb/self.r/\
                 (self.m+(self.Jf+self.Jr)/self.r**2)
         self.v += acc*self.config.const.dt
         self.v = max(0, self.v)
+
+    def set_v(self, v):
+        self.v = v
+
+    def set_control(self, alpha, Pb):
+        self.alpha = alpha
+        self.Pb = Pb
 
 
 if __name__ == '__main__':
