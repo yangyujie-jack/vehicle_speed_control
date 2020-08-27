@@ -1,6 +1,6 @@
 from model import Vehicle, MonitorVehicle, get_slope, WLTC
 from config import Config
-from controller import get_controller
+from utils import *
 import numpy as np
 import matplotlib.pyplot as plt
 
@@ -27,13 +27,10 @@ def get_v_des(t, sim_name, const_v=0):
 
 
 if __name__ == "__main__":
-    print("Initializing...")
     cfg = Config()
-    test = cfg.simulation.simulation_name
-    save = False
+    log_config(cfg)
     vehicle = MonitorVehicle(Vehicle(cfg))
     controller = get_controller(cfg)
-    alpha, Pb = 0, 0
     t = 0
     v_dess = []
     while t < cfg.simulation.simulation_time:
@@ -43,11 +40,11 @@ if __name__ == "__main__":
                           cfg.simulation.const_v)
         v = vehicle.get_v()
         v_dess.append(v_des)
+        alpha, Pb = vehicle.get_control()
         mode = controller.get_mode(v, v_des, alpha, Pb)
-        slope = get_slope(vehicle.get_s())
+        slope = get_slope(cfg.simulation.slope_amplitude, vehicle.get_s())
         alpha, Pb = controller.step(mode, v, v_des, alpha, slope)
         vehicle.control(alpha, Pb)
-        alpha, Pb = vehicle.get_control()
         vehicle.step(slope)
         t += cfg.const.dt
 
@@ -62,41 +59,18 @@ if __name__ == "__main__":
     print(f"max velocity error {format(max(abs(v_error)*3.6), '.4f')} km/h")
     print(f"fuel consumption {format(fuel_csp, '.4f')} kg")
 
-    # 保存控制量
-    # if save:
-    #     alphas = np.array(alphas)
-    #     Pbs = np.array(Pbs)
-    #     np.save(control_data_dir+"alpha_v100", alphas)
-    #     np.save(control_data_dir+"Pb_v100", Pbs)
-
     # 画图
     # 期望车速和实际车速
-    # plt.figure()
-    # plt.plot(ts, v_dess, label="v_des")
-    # plt.plot(ts, vs, label="v")
-    # plt.xlabel("t/s")
-    # plt.ylabel("v/(km/h)")
-    # plt.ylim([const_v-20, const_v+20])
-    # plt.legend()
-    # plt.show()
-
-    # 车速误差
-    # plt.figure()
-    # plt.plot(ts, v_error)
-    # plt.xlabel("t/s")
-    # plt.ylabel("velocity error/(km/h)")
-
-    # 节气门开度和制动压力
-    # plt.figure()
-    # plt.subplot(2,1,1)
-    # plt.plot(ts, alphas)
-    # plt.xlabel("t/s")
-    # plt.ylabel("alpha")
-    # plt.subplot(2,1,2)
-    # plt.plot(ts, Pbs)
-    # plt.xlabel("t/s")
-    # plt.ylabel("Pb/MPa")
-    # plt.show()
+    if cfg.simulation.plot:
+        plt.figure()
+        ts = np.arange(len(vs))
+        plt.plot(ts, v_dess*3.6, label="v_des")
+        plt.plot(ts, vs*3.6, label="v")
+        plt.xlabel("t/s")
+        plt.ylabel("v/(km/h)")
+        plt.ylim([cfg.simulation.const_v-20, cfg.simulation.const_v+20])
+        plt.legend()
+        plt.show()
 
 
 

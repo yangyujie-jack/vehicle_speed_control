@@ -8,13 +8,14 @@ class MPCController:
     def __init__(self, config):
         self.config = config
         self.dt = self.config.const.dt
-        self.n_pred = 50
+        self.t_pred = 5
+        self.n_pred = int(self.t_pred/self.dt)
         self.gamma = 0.9
 
     def target_func(self, controls, v, v_des, alpha0, Pb0):
         t1 = time.time()
-        alphas = controls[:self.n_pred]
-        Pbs = controls[-self.n_pred:]
+        alphas = controls[:len(controls)//2]
+        Pbs = controls[len(controls)//2:]
         self.vehicle = LinearVehicle(self.config)
         self.vehicle.set_v(v)
         self.vehicle.set_control(alpha0, Pb0)
@@ -58,21 +59,16 @@ if __name__ == '__main__':
     from config import Config
 
     cfg = Config()
-    mpc = MPCController(cfg)
     veh = Vehicle(cfg)
+    mpc = MPCController(cfg)
+    t_use = 5
+    n_use = int(t_use/cfg.const.dt)
     v_des = 20
     for _ in range(1000):
         alpha, Pb = veh.get_control()
         control = mpc.step(1, veh.v, v_des, alpha, Pb)
-        # alpha, Pb = np.mean(control[:5]), control[mpc.n_pred]
-        # print(f"v={format(veh.v, '.3f')}, "
-        #       f"alpha={format(alpha, '.2f')}, "
-        #       f"Pb={format(Pb, '.2f')}")
-        # veh.control(alpha, Pb)
-        # veh.step(0)
-
-        for i in range(mpc.n_pred):
-            alpha, Pb = control[i], control[i+mpc.n_pred]
+        alphas, Pbs = control[:n_use], control[mpc.n_pred:mpc.n_pred+n_use]
+        for alpha, Pb in zip(alphas, Pbs):
             print(f"v={format(veh.v, '.3f')}, "
                   f"alpha={format(alpha, '.2f')}, "
                   f"Pb={format(Pb, '.2f')}")

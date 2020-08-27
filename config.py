@@ -13,15 +13,18 @@ class Config:
         self.simulation.simulation_name = SIM_NAMES[1]
         if self.simulation.simulation_name == "const_v":
             self.simulation.const_v = CONST_V[2]
-            self.simulation.simulation_time = 1e4 / \
+            self.simulation.distance = 1e4
+            self.simulation.simulation_time = self.simulation.distance / \
                                               (self.simulation.const_v / 3.6)
         else:
             self.simulation.simulation_time = 1800
+        self.simulation.plot = True
+        self.simulation.slope_amplitude = 2  # degree
 
         # constants
         self.const = edict()
-        # self.const.dt = 0.025  # 仿真步长
-        self.const.dt = 0.1
+        self.const.dt = 0.025  # 仿真步长
+        # self.const.dt = 0.1
         self.const.g = 9.8
 
         # engine
@@ -71,7 +74,7 @@ class Config:
                                        self.vehicle.Pb_bounds[0])
         self.vehicle.m = 1416  # 整车质量
         self.vehicle.Jf = 1.8  # 前轴转动惯量
-        self.vehicle.Jr = 1.8  # 前轴转动惯量
+        self.vehicle.Jr = 1.8  # 后轴转动惯量
         self.vehicle.r = 0.31  # 车轮半径
         self.vehicle.i0 = 4.10  # 主减速比
         self.vehicle.eff0 = 0.99  # 主减速器效率
@@ -96,7 +99,7 @@ class Config:
         # lqr
         self.controller.lqr = edict()
         self.controller.lqr.Q1 = 1  # 速度误差系数
-        self.controller.lqr.Q2 = 100  # 油耗系数
+        self.controller.lqr.Q2 = 0  # 油耗系数, 300,300,100
         self.controller.lqr.R_alpha = 0.1
         self.controller.lqr.R_Pb = self.controller.lqr.R_alpha*\
                                    self.vehicle.alpha_bounds[1]/self.vehicle.Pb_bounds[1]
@@ -104,6 +107,24 @@ class Config:
         # mpc
         self.controller.mpc = edict()
         self.controller.mpc.pred_time = 10
+
+        # carsim data
+        self.carsim = edict()
+        self.carsim.path = os.path.join(PROJECT_ROOT, "data/carsim/")
+        self.carsim.files = os.listdir(self.carsim.path)
+
+
+        self.carsim.data_file = self.carsim.files[3]
+        self.carsim.test_name = self.carsim.data_file[:-4]
+        if self.carsim.test_name == "accel_then_brake":
+            self.carsim.T = 30
+            self.carsim.v0 = 0
+        elif self.carsim.test_name == "brake_from_80":
+            self.carsim.T = 8
+            self.carsim.v0 = 80/3.6
+        elif self.carsim.test_name == "brake_from_120":
+            self.carsim.T = 8
+            self.carsim.v0 = 120/3.6
 
 
 if __name__ == '__main__':
