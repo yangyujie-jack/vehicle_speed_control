@@ -20,33 +20,28 @@ class FuelRate:
         """
         if alpha < 0 or alpha > self.MAP[0, -1]:
             raise ValueError(f"Invalid alpha {alpha}!")
-        if n < self.MAP[1, 0] or n > self.MAP[-1, 0]:
+        if n < self.MAP[1, 0]:
             raise ValueError(f"Invalid n {n}!")
-        i = np.where(self.MAP[1:, 0]>=n)[0][0]+1  # 转速在i-1和i之间
-        j = np.where(self.MAP[0, 1:]>=alpha)[0][0]+1  # 节气门在j-1和j之间
-        if i == 1:
-            if j == 1:
-                fr = self.MAP[i,j]
-            else:
-                alpha1 = self.MAP[0, j - 1]
-                alpha2 = self.MAP[0, j]
-                fr1 = self.MAP[i, j-1]
-                fr2 = self.MAP[i, j]
-                fr = (alpha-alpha1)/(alpha2-alpha1)*(fr2-fr1)+fr1
+
+        _i = np.where(self.MAP[1:, 0] <= n)[0][-1]+1
+        _j = np.where(self.MAP[0, 1:] <= alpha)[0][-1]+1
+        if _i == self.MAP.shape[0] - 1:
+            i = _i - 1
         else:
-            n1 = self.MAP[i-1, 0]
-            n2 = self.MAP[i, 0]
-            if j == 1:
-                fr1 = self.MAP[i-1, 1]
-                fr2 = self.MAP[i, 1]
-            else:
-                alpha1 = self.MAP[0,j-1]
-                alpha2 = self.MAP[0,j]
-                [[T11,T12],[T21,T22]] = self.MAP[i-1:i+1,j-1:j+1]
-                fr1 = (alpha-alpha1)/(alpha2-alpha1)*(T12-T11)+T11
-                fr2 = (alpha-alpha1)/(alpha2-alpha1)*(T22-T21)+T21
-            fr = (n-n1)/(n2-n1)*(fr2-fr1)+fr1
-        return fr
+            i = _i
+        if _j == self.MAP.shape[1] - 1:
+            j = _j - 1
+        else:
+            j = _j
+        n1 = self.MAP[i, 0]
+        n2 = self.MAP[i+1, 0]
+        a1 = self.MAP[0, j]
+        a2 = self.MAP[0, j+1]
+        [[f11, f12], [f21, f22]] = self.MAP[i:i+2, j:j+2]
+        f1 = (alpha - a1) / (a2 - a1) * (f12 - f11) + f11
+        f2 = (alpha - a1) / (a2 - a1) * (f22 - f21) + f21
+        f = (n - n1) / (n2 - n1) * (f2 - f1) + f1
+        return f
 
 
 if __name__ == '__main__':

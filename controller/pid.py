@@ -1,10 +1,12 @@
+from controller.base import BaseController
 
 
-class PIDController:
+class PIDController(BaseController):
     """
     位置式PID控制器
     """
     def __init__(self, config):
+        super(PIDController, self).__init__(config)
         # 节气门
         self.KP_a = 1
         self.KI_a = 0
