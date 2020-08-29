@@ -25,3 +25,10 @@ def log_config(config):
     log += "Constants:\n"
     log += f"\tdt: {config.const.dt}s\n"
     print(log)
+
+
+def print_res(v_error, fuel_csp):
+    print("")
+    print(f"max velocity error {format(max(abs(v_error))*3.6, '.4f')} km/h")
+    print(f"average velocity error {format(sum(abs(v_error))/len(v_error)*3.6, '.4f')} km/h")
+    print(f"fuel consumption {format(fuel_csp, '.4f')} kg")

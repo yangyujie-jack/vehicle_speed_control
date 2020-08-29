@@ -46,13 +46,10 @@ if __name__ == "__main__":
     v_dess = np.array(v_dess)
     vs = np.array(vehicle.get_vs())
     v_error = v_dess - vs
-    v_err_2_int = np.sum(v_error*v_error*cfg.const.dt)
+    # v_err_2_int = np.sum(v_error*v_error*cfg.const.dt)
     fuel_csp = vehicle.get_fuel_scp()
 
-    print("")
-    print(f"velocity error squared integral {format(v_err_2_int, '.4f')} m^2/s")
-    print(f"max velocity error {format(max(abs(v_error)*3.6), '.4f')} km/h")
-    print(f"fuel consumption {format(fuel_csp, '.4f')} kg")
+    print_res(v_error, fuel_csp)
 
     # 画图
     # 期望车速和实际车速
