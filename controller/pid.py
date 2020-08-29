@@ -35,4 +35,4 @@ class PIDController(BaseController):
             Pb = 0
         self.ei = self.ei + e
         self.e_last = e
-        return alpha, Pb
+        return alpha, -Pb
