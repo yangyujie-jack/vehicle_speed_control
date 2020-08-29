@@ -1,4 +1,4 @@
-from model import Vehicle, MonitorVehicle, get_slope, WLTC
+from model import Vehicle, MonitorVehicle, WLTC
 from config import Config
 from utils import *
 import numpy as np
@@ -42,13 +42,26 @@ if __name__ == "__main__":
     # 画图
     # 期望车速和实际车速
     plt.figure()
-    ts = np.arange(len(vs))
+    ts = np.arange(len(vs))*cfg.const.dt
     plt.plot(ts, v_dess*3.6, label="v_des")
     plt.plot(ts, vs*3.6, label="v")
     plt.xlabel("t/s")
     plt.ylabel("v/(km/h)")
     plt.legend()
     plt.show()
+
+    # 节气门开度和制动压力
+    alphas, Pbs = vehicle.get_alphas_Pbs()
+    plt.subplot(2, 1, 1)
+    plt.plot(ts, alphas)
+    plt.xlabel("t/s")
+    plt.ylabel("alpha")
+    plt.subplot(2, 1, 2)
+    plt.plot(ts, Pbs)
+    plt.xlabel("t/s")
+    plt.ylabel("Pb")
+    plt.show()
+
 
 
 

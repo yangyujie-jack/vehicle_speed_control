@@ -19,7 +19,7 @@ class LQRController(BaseController):
         self.R_Pb = self.config.controller.lqr.R_Pb
         self.linear_vehicle = LinearVehicle(self.config)
 
-    def step(self, mode, x, eta, curr_alpha, slope=0):
+    def step(self, mode, x, eta, curr_alpha):
         """
         计算控制量
         :param slope: 当前坡度
@@ -29,6 +29,7 @@ class LQRController(BaseController):
         :param eta: 期望速度
         :return: 节气门开度, 制动压力
         """
+        slope = 0  # 路面坡度未知，用0计算
         if mode == 0:
             alpha, Pb = 0, 0
         else:

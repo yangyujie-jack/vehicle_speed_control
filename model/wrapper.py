@@ -38,3 +38,6 @@ class MonitorVehicle:
 
     def get_fuel_scp(self):
         return self._fuel_csp
+
+    def get_alphas_Pbs(self):
+        return self._alphas, self._Pbs

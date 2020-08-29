@@ -4,6 +4,7 @@ from model import Vehicle
 from sklearn.linear_model import LinearRegression
 from sklearn.preprocessing import PolynomialFeatures
 from config import Config
+import csv
 
 
 cfg = Config()
@@ -239,5 +240,11 @@ def get_fuel_rate_model(plot=False):
 
 
 # 线性油耗参数
-# fuel_rate_params = get_fuel_rate_model()
+# fuel_rate_params = get_fuel_rate_model(plot=True)
 # np.save("fuel_rate_params", fuel_rate_params)
+
+
+def get_fr_params():
+    with open(cfg.fuel_rate.data_path, 'r') as f:
+        reader = csv.reader(f)
+        MAP = np.array(list(reader), dtype=float)  # 油耗MAP，第一行是节气门开度，第一列是转速

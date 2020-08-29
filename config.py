@@ -85,7 +85,7 @@ class Config:
         # lqr
         self.controller.lqr = edict()
         self.controller.lqr.Q1 = 1  # 速度误差系数
-        self.controller.lqr.Q2 = 0  # 油耗系数, 300,300,100
+        self.controller.lqr.Q2 = 600  # 油耗系数, 600,600,100
         self.controller.lqr.R_alpha = 0.1
         self.controller.lqr.R_Pb = self.controller.lqr.R_alpha*\
                                    self.vehicle.alpha_bounds[1]/self.vehicle.Pb_bounds[1]

@@ -18,7 +18,7 @@ def get_v_des(t, const_v=0):
 if __name__ == "__main__":
     # speed
     CONST_V = [20, 40, 100]
-    const_v = CONST_V[2]
+    const_v = CONST_V[0]
 
     # slope
     max_slope = 2
@@ -37,7 +37,7 @@ if __name__ == "__main__":
         v = vehicle.get_v()
         mode = controller.get_mode(v, v_des, alpha, Pb)
         slope = get_slope(max_slope, vehicle.get_s())
-        alpha, Pb = controller.step(mode, v, v_des, alpha, slope)
+        alpha, Pb = controller.step(mode, v, v_des, alpha)
         # print(f"dv: {v-v_des}, alpha: {alpha}, Pb: {Pb}")
         vehicle.control(alpha, Pb)
         vehicle.step(slope)
@@ -46,22 +46,21 @@ if __name__ == "__main__":
     v_dess = np.array(v_dess)
     vs = np.array(vehicle.get_vs())
     v_error = v_dess - vs
-    # v_err_2_int = np.sum(v_error*v_error*cfg.const.dt)
     fuel_csp = vehicle.get_fuel_scp()
 
     print_res(v_error, fuel_csp)
 
     # 画图
     # 期望车速和实际车速
-    plt.figure()
-    ts = np.arange(len(vs))
-    plt.plot(ts, v_dess*3.6, label="v_des")
-    plt.plot(ts, vs*3.6, label="v")
-    plt.xlabel("t/s")
-    plt.ylabel("v/(km/h)")
-    plt.ylim([const_v-20, const_v+20])
-    plt.legend()
-    plt.show()
+    # plt.figure()
+    # ts = np.arange(len(vs))*cfg.const.dt
+    # plt.plot(ts, v_dess*3.6, label="v_des")
+    # plt.plot(ts, vs*3.6, label="v")
+    # plt.xlabel("t/s")
+    # plt.ylabel("v/(km/h)")
+    # plt.ylim([const_v-20, const_v+20])
+    # plt.legend()
+    # plt.show()
 
 
 

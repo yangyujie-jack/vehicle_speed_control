@@ -20,7 +20,7 @@ class PIDController(BaseController):
         self.ei = 0  # e的积分
         self.e_last = 0  # 上一时刻的e
 
-    def step(self, mode, v, v_des, alpha, slope):
+    def step(self, mode, v, v_des, curr_alpha=0):
         e = v_des - v
         if mode == -1:
             # 制动
