@@ -26,7 +26,12 @@ if __name__ == "__main__":
         alpha, Pb = vehicle.get_control()
         v = vehicle.get_v()
         mode = controller.get_mode(v, v_des, alpha, Pb)
-        alpha, Pb = controller.step(mode, v, v_des, alpha, slope)
+        alpha, Pb = controller.step(mode=mode,
+                                    v=v,
+                                    v_des=v_des,
+                                    alpha=alpha,
+                                    Pb=Pb,
+                                    n=vehicle.vehicle.engine.n)
         vehicle.control(alpha, Pb)
         vehicle.step(slope)
         t += cfg.const.dt
@@ -34,7 +39,6 @@ if __name__ == "__main__":
     v_dess = np.array(v_dess)
     vs = np.array(vehicle.get_vs())
     v_error = v_dess - vs
-    # v_err_2_int = np.sum(v_error*v_error*cfg.const.dt)
     fuel_csp = vehicle.get_fuel_scp()
 
     print_res(v_error, fuel_csp)

@@ -18,7 +18,7 @@ def get_v_des(t, const_v=0):
 if __name__ == "__main__":
     # speed
     CONST_V = [20, 40, 100]
-    const_v = CONST_V[0]
+    const_v = CONST_V[1]
 
     # slope
     max_slope = 2
@@ -29,6 +29,8 @@ if __name__ == "__main__":
     controller = get_controller(cfg)
     t = 0
     v_dess = []
+    fr = []
+    efr = []
     while t < T:
         print(f"\r{format(t, '.2f')}/{format(T, '.2f')}", end='')
         v_des = get_v_des(t, const_v)
@@ -37,11 +39,20 @@ if __name__ == "__main__":
         v = vehicle.get_v()
         mode = controller.get_mode(v, v_des, alpha, Pb)
         slope = get_slope(max_slope, vehicle.get_s())
-        alpha, Pb = controller.step(mode, v, v_des, alpha)
+        alpha, Pb = controller.step(mode=mode,
+                                    v=v,
+                                    v_des=v_des,
+                                    alpha=alpha,
+                                    Pb=Pb,
+                                    n=vehicle.vehicle.engine.n)
         # print(f"dv: {v-v_des}, alpha: {alpha}, Pb: {Pb}")
         vehicle.control(alpha, Pb)
         vehicle.step(slope)
         t += cfg.const.dt
+
+        fr.append(vehicle.get_fuel_rate())
+        efr.append(controller.get_estimate_fr(vehicle.get_v(),
+                                              vehicle.get_control()[0]))
 
     v_dess = np.array(v_dess)
     vs = np.array(vehicle.get_vs())
@@ -62,5 +73,10 @@ if __name__ == "__main__":
     # plt.legend()
     # plt.show()
 
+    # plt.figure()
+    # plt.plot(np.arange(len(fr)), fr, label="real fr")
+    # plt.plot(np.arange(len(efr)), efr, label="estimated fr")
+    # plt.legend()
+    # plt.show()
 
 

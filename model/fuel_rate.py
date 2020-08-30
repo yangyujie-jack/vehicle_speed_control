@@ -1,5 +1,6 @@
 import numpy as np
 import csv
+import matplotlib.pyplot as plt
 
 
 class FuelRate:
@@ -10,7 +11,8 @@ class FuelRate:
         self.config = config.fuel_rate
         with open(self.config.data_path, 'r') as f:
             reader = csv.reader(f)
-            self.MAP = np.array(list(reader), dtype=float)  # 油耗MAP，第一行是节气门开度，第一列是转速
+            self.MAP = np.array(list(reader), dtype=float)
+            # 油耗MAP，第一行是节气门开度，第一列是转速
 
     def get_fuel_rate(self, n, alpha):
         """
@@ -43,11 +45,34 @@ class FuelRate:
         f = (n - n1) / (n2 - n1) * (f2 - f1) + f1
         return f
 
+    def plot_fr(self):
+        """
+        画不同发动机转速下，油耗关于节气门开度的曲线
+        """
+        alphas = self.MAP[0, 1:]
+        plt.figure()
+        for i in range(1, self.MAP.shape[0]):
+            frs = self.MAP[i, 1:]
+            plt.plot(alphas, frs)
+        plt.xlabel("alpha")
+        plt.ylabel("fuel rate")
+        plt.show()
+
+    def get_dfr(self, n, alpha):
+        """
+        油耗对节气门开度的导数
+        """
+        dalpha = 0.01
+        alpha1 = max(0, alpha-dalpha)
+        alpha2 = min(1, alpha+dalpha)
+        fr1 = self.get_fuel_rate(n, alpha1)
+        fr2 = self.get_fuel_rate(n, alpha2)
+        dfr = (fr2-fr1)/(alpha2-alpha1)
+        return dfr
+
 
 if __name__ == '__main__':
     from config import Config
 
     cfg = Config()
     fr = FuelRate(cfg)
-    for a in np.arange(0,1,0.1):
-        print(fr.get_fuel_rate(1000, a))
