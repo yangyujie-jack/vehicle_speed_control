@@ -19,8 +19,8 @@ class MonitorVehicle:
         self._alphas.append(self.vehicle.alpha)
         self._Pbs.append(self.vehicle.Pb)
         self._s += self.vehicle.v*self._dt
-        fr = self.vehicle.get_fuel_rate()
-        self._fuel_csp += fr*self._dt
+        # fr = self.vehicle.get_fuel_rate()
+        # self._fuel_csp += fr*self._dt
 
     def get_v(self):
         return self.vehicle.v
@@ -29,7 +29,7 @@ class MonitorVehicle:
         return self._vs
 
     def get_control(self):
-        return self.vehicle.get_control()
+        return self.vehicle.alpha, self.vehicle.Pb
 
     def get_controls(self):
         return self._alphas, self._Pbs

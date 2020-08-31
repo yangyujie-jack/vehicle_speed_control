@@ -79,20 +79,20 @@ class Config:
         # controller
         CTRL_NAMES = ["PID", "LQR", "MPC"]
         self.controller = edict()
-        self.controller.name = CTRL_NAMES[1]
+        self.controller.name = CTRL_NAMES[2]
         self.controller.v_tol = 0.1  # 节气门/制动切换允许的误差, m/s
 
         # lqr
         self.controller.lqr = edict()
         self.controller.lqr.Q1 = 1  # 速度误差系数
-        self.controller.lqr.Q2 = 3e3  # 油耗系数, 600,600,100
+        self.controller.lqr.Q2 = 0  # 油耗系数, 600,600,100
         self.controller.lqr.R_alpha = 0.1
         self.controller.lqr.R_Pb = self.controller.lqr.R_alpha*\
                                    self.vehicle.alpha_bounds[1]/self.vehicle.Pb_bounds[1]
 
         # mpc
         self.controller.mpc = edict()
-        self.controller.mpc.pred_time = 10
+        self.controller.mpc.n_pred = 10
 
         # carsim data
         self.carsim = edict()

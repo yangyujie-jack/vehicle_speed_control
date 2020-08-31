@@ -13,7 +13,7 @@ class PIDController(BaseController):
         self.KD_a = 0
 
         # 制动压力
-        self.KP_p = 1
+        self.KP_p = -1
         self.KI_p = 0
         self.KD_p = 0
 
@@ -33,6 +33,8 @@ class PIDController(BaseController):
             # 节气门开度
             alpha = self.KP_a*e + self.KI_a*self.ei + self.KD_a*(e-self.e_last)
             Pb = 0
+        alpha = max(min(alpha, self.alpha_bounds[1]), self.alpha_bounds[0])
+        Pb = max(min(Pb, self.Pb_bounds[1]), self.Pb_bounds[0])
         self.ei = self.ei + e
         self.e_last = e
-        return alpha, -Pb
+        return alpha, Pb

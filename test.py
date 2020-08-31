@@ -1,5 +1,8 @@
-a = []
-if a:
-    print(1)
-else:
-    print(2)
+
+
+def fun(*args):
+    a, b = args
+    print(a,b)
+
+
+fun(1,2)

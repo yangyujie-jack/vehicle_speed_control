@@ -7,14 +7,15 @@ class LinearVehicle:
         self.config = config
         self.vehicle_params = np.load(self.config.vehicle.linear_vehicle_params)
         self.fuel_rate_params = np.load(self.config.vehicle.fuel_rate_params)
-        self.v = self.config.vehicle.v  # m/s
         self.m = self.config.vehicle.m
         self.Jf = self.config.vehicle.Jf
         self.Jr = self.config.vehicle.Jr
         self.r = self.config.vehicle.r
+        self.Kb = self.config.vehicle.Kb
+
+        self.v = self.config.vehicle.v  # m/s
         self.alpha = self.config.vehicle.alpha
         self.Pb = self.config.vehicle.Pb
-        self.Kb = self.config.vehicle.Kb
 
     def get_vehicle_param(self, slope, alpha):
         """
@@ -81,9 +82,15 @@ class LinearVehicle:
     def set_v(self, v):
         self.v = v
 
+    def get_v(self):
+        return self.v
+
     def set_control(self, alpha, Pb):
         self.alpha = alpha
         self.Pb = Pb
+
+    def get_control(self):
+        return self.alpha, self.Pb
 
 
 if __name__ == '__main__':

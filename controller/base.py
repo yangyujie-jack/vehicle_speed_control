@@ -6,6 +6,8 @@ class BaseController:
         self.alpha_thresh = self.config.vehicle.d_alpha
         self.Pb_thresh = self.config.vehicle.d_Pb
         self.v_tol = self.config.controller.v_tol
+        self.alpha_bounds = self.config.vehicle.alpha_bounds
+        self.Pb_bounds = self.config.vehicle.Pb_bounds
 
     def get_mode(self, v, v_des, alpha, Pb):
         """

@@ -1,15 +1,15 @@
 from controller import *
 
 
-def get_controller(config):
-    if config.controller.name == "LQR":
+def get_controller(name, config):
+    if name == "LQR":
         return LQRController(config)
-    elif config.controller.name == "PID":
+    elif name == "PID":
         return PIDController(config)
-    elif config.controller.name == "MPC":
+    elif name == "MPC":
         return MPCController(config)
     else:
-        raise ValueError(f"Invalid controller name '{config.controller.name}'")
+        raise ValueError(f"Invalid controller name '{name}'")
 
 
 def log_config(config):

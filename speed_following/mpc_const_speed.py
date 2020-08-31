@@ -1,11 +1,11 @@
-from model import Vehicle, MonitorVehicle, get_slope
+from model import Vehicle, MonitorVehicle, get_slope, LinearVehicle
 from config import Config
 from utils import *
 import numpy as np
 import matplotlib.pyplot as plt
 
 
-def get_v_des(t, const_v=0):
+def get_v_des(t, const_v):
     a = 1  # 加速度，单位：m/s^2
     t_a = const_v / (3.6 * a)  # 加速时间
     if t < t_a:
@@ -23,40 +23,28 @@ if __name__ == "__main__":
     # slope
     max_slope = 0
 
-    # controller name
-    CTRL_NAME = ["PID", "LQR"]
-    ctrl_name = CTRL_NAME[1]
-
     cfg = Config()
-    T = 1e4/(const_v/3.6)
+    T = 30
     vehicle = MonitorVehicle(Vehicle(cfg))
-    controller = get_controller(ctrl_name, cfg)
+    # vehicle = MonitorVehicle(LinearVehicle(cfg))
+    controller = get_controller("MPC", cfg)
     t = 0
     v_dess = []
-    fr = []
-    efr = []
     while t < T:
         print(f"\r{format(t, '.2f')}/{format(T, '.2f')}", end='')
-        v_des = get_v_des(t, const_v)
-        v_dess.append(v_des)
-        alpha, Pb = vehicle.get_control()
-        v = vehicle.get_v()
-        mode = controller.get_mode(v, v_des, alpha, Pb)
-        slope = get_slope(max_slope, vehicle.get_s())
-        alpha, Pb = controller.step(mode=mode,
-                                    v=v,
-                                    v_des=v_des,
-                                    alpha=alpha,
-                                    Pb=Pb,
-                                    n=vehicle.vehicle.engine.n)
-        # print(f"dv: {v-v_des}, alpha: {alpha}, Pb: {Pb}")
-        vehicle.control(alpha, Pb)
-        vehicle.step(slope)
-        t += cfg.const.dt
 
-        # fr.append(vehicle.get_fuel_rate())
-        # efr.append(controller.get_estimate_fr(vehicle.get_v(),
-        #                                       vehicle.get_control()[0]))
+        next_v_dess = []
+        for i in range(controller.n_pred):
+            v_des = get_v_des(t+i*cfg.const.dt, const_v)
+            next_v_dess.append(v_des)
+
+        v_dess.append(get_v_des(t, const_v))
+        v = vehicle.get_v()
+        alpha, Pb = vehicle.get_control()
+        alpha, Pb = controller.step(mode=1, v=v, v_des=next_v_dess, alpha=alpha, Pb=Pb)
+        vehicle.control(alpha, Pb)
+        vehicle.step(slope=0)
+        t += cfg.const.dt
 
     v_dess = np.array(v_dess)
     vs = np.array(vehicle.get_vs())
@@ -73,7 +61,7 @@ if __name__ == "__main__":
     plt.plot(ts, vs*3.6, label="v")
     plt.xlabel("t/s")
     plt.ylabel("v/(km/h)")
-    plt.ylim([const_v-20, const_v+20])
+    # plt.ylim([const_v-20, const_v+20])
     plt.legend()
     plt.show()
 
