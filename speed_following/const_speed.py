@@ -18,7 +18,7 @@ def get_v_des(t, const_v=0):
 if __name__ == "__main__":
     # speed
     CONST_V = [20, 40, 100]
-    const_v = CONST_V[2]
+    const_v = CONST_V[0]
 
     # slope
     max_slope = 0

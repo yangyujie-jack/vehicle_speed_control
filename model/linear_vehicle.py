@@ -1,5 +1,6 @@
 import numpy as np
 from copy import deepcopy
+from ctypes import *
 
 
 class LinearVehicle:
@@ -12,18 +13,35 @@ class LinearVehicle:
         self.Jr = self.config.vehicle.Jr
         self.r = self.config.vehicle.r
         self.Kb = self.config.vehicle.Kb
-
+        self.k_Pb = -self.Kb/self.r/(self.m+(self.Jf+self.Jr)/self.r**2)
         self.v = self.config.vehicle.v  # m/s
         self.alpha = self.config.vehicle.alpha
         self.Pb = self.config.vehicle.Pb
+        self._build_c_funcs()
+
+    def _build_c_funcs(self):
+        dll = CDLL(self.config.PROJECT_ROOT + "/Dll1.dll")
+        self._bound_control = dll.bound_control
+        self._bound_control.argtypes = [c_double, c_double,
+                                       POINTER(c_double), POINTER(c_double)]
+        self._update_v = dll.update_v
+        self._update_v.argtypes = [POINTER(c_double), c_double, c_double, c_double]
+        self._update_v.restype = c_double
+
+    def control(self, new_alpha, new_Pb):
+        old_alpha, old_Pb = self.get_control()
+        old_alpha, old_Pb = c_double(old_alpha), c_double(old_Pb)
+        new_alpha, new_Pb = c_double(new_alpha), c_double(new_Pb)
+        self._bound_control(old_alpha, old_Pb, pointer(new_alpha), pointer(new_Pb))
+        self.alpha, self.Pb = new_alpha.value, new_Pb.value
+
+    def update_v(self, ks, alpha, Pb):
+        ks = (c_double*4)(*ks)
+        old_v = c_double(self.v)
+        alpha, Pb = c_double(alpha), c_double(Pb)
+        self.v = self._update_v(ks, old_v, alpha, Pb)
 
     def get_vehicle_param(self, slope, alpha):
-        """
-        获取当前的线性模型参数
-        :param slope: 坡度, rad
-        :param alpha: 节气门开度
-        :return: 线性模型参数
-        """
         g = self.config.const.g
         Fi = self.m * g * np.sin(slope)  # 坡度阻力
         # 找节气门开度的区间
@@ -38,11 +56,6 @@ class LinearVehicle:
         return param
 
     def get_fuel_rate_param(self, alpha, v):
-        """
-        获取当前的线性模型参数
-        :param alpha: 节气门开度
-        :return:
-        """
         # 找节气门开度的区间
         alpha_range_i = 0
         for i, asp in enumerate(self.config.vehicle.fr_alpha_split_points):
@@ -60,24 +73,10 @@ class LinearVehicle:
         param = self.fuel_rate_params[alpha_range_i, v_range_i]
         return param
 
-    def control(self, alpha, Pb):
-        alpha_hi = min(self.config.vehicle.alpha_bounds[1],
-                       self.alpha+self.config.vehicle.d_alpha)
-        alpha_lo = max(self.config.vehicle.alpha_bounds[0],
-                       self.alpha-self.config.vehicle.d_alpha)
-        Pb_hi = min(self.config.vehicle.Pb_bounds[1],
-                    self.Pb+self.config.vehicle.d_Pb)
-        Pb_lo = max(self.config.vehicle.Pb_bounds[0],
-                    self.Pb-self.config.vehicle.d_Pb)
-        self.alpha = np.clip(alpha, alpha_lo, alpha_hi)
-        self.Pb = np.clip(Pb, Pb_lo, Pb_hi)
-
     def step(self, slope=0):
-        Kvs = self.get_vehicle_param(slope, self.alpha)
-        acc = Kvs[0]*self.v+Kvs[1]*self.alpha+Kvs[2]-self.Kb*self.Pb/self.r/\
-                (self.m+(self.Jf+self.Jr)/self.r**2)
-        self.v += acc*self.config.const.dt
-        self.v = max(0, self.v)
+        vp = self.get_vehicle_param(slope, self.alpha)
+        ks = [vp[0], vp[1], self.k_Pb, vp[2]]
+        self.update_v(ks, self.alpha, self.Pb)
 
     def set_v(self, v):
         self.v = v
@@ -91,14 +90,3 @@ class LinearVehicle:
 
     def get_control(self):
         return self.alpha, self.Pb
-
-
-if __name__ == '__main__':
-    from config import Config
-
-    cfg = Config()
-    veh = LinearVehicle(cfg)
-    for _ in range(1000):
-        veh.control(1, 0)
-        veh.step()
-        print(veh.v)

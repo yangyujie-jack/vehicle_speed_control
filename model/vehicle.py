@@ -3,7 +3,7 @@ from model.torque_converter import TorqueConverter
 from model.transmission import Transmission
 from model.fuel_rate import FuelRate
 import numpy as np
-
+from ctypes import *
 
 class Vehicle:
     """
@@ -29,18 +29,20 @@ class Vehicle:
         self.i0 = self.config.vehicle.i0
         self.eff0 = self.config.vehicle.eff0
         self.Kb = self.config.vehicle.Kb
+        self._build_bound_control()
 
-    def control(self, alpha, Pb):
-        alpha_hi = min(self.config.vehicle.alpha_bounds[1],
-                       self.alpha+self.config.vehicle.d_alpha)
-        alpha_lo = max(self.config.vehicle.alpha_bounds[0],
-                       self.alpha-self.config.vehicle.d_alpha)
-        Pb_hi = min(self.config.vehicle.Pb_bounds[1],
-                    self.Pb+self.config.vehicle.d_Pb)
-        Pb_lo = max(self.config.vehicle.Pb_bounds[0],
-                    self.Pb-self.config.vehicle.d_Pb)
-        self.alpha = np.clip(alpha, alpha_lo, alpha_hi)
-        self.Pb = np.clip(Pb, Pb_lo, Pb_hi)
+    def _build_bound_control(self):
+        dll = CDLL(self.config.PROJECT_ROOT + "/Dll1.dll")
+        self._bound_control = dll.bound_control
+        self._bound_control.argtypes = [c_double, c_double,
+                                       POINTER(c_double), POINTER(c_double)]
+
+    def control(self, new_alpha, new_Pb):
+        old_alpha, old_Pb = self.get_control()
+        old_alpha, old_Pb = c_double(old_alpha), c_double(old_Pb)
+        new_alpha, new_Pb = c_double(new_alpha), c_double(new_Pb)
+        self._bound_control(old_alpha, old_Pb, pointer(new_alpha), pointer(new_Pb))
+        self.alpha, self.Pb = new_alpha.value, new_Pb.value
 
     def get_fuel_rate(self):
         return self.fuel_rate.get_fuel_rate(self.engine.n, self.alpha)

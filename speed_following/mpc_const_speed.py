@@ -6,18 +6,19 @@ import matplotlib.pyplot as plt
 
 
 def get_v_des(t, const_v):
+    const_v /= 3.6
     a = 1  # 加速度，单位：m/s^2
-    t_a = const_v / (3.6 * a)  # 加速时间
+    t_a = const_v / a  # 加速时间
     if t < t_a:
         v_des = const_v / t_a * t
     else:
         v_des = const_v
-    return v_des/3.6  # m/s
+    return v_des  # m/s
 
 
 if __name__ == "__main__":
     # speed
-    CONST_V = [20, 40, 100]
+    CONST_V = [20, 40, 100]  # km/h
     const_v = CONST_V[2]
 
     # slope

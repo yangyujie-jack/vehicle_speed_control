@@ -4,7 +4,7 @@ import os
 
 class Config:
     def __init__(self):
-        PROJECT_ROOT = os.path.dirname(os.path.realpath(__file__))
+        self.PROJECT_ROOT = os.path.dirname(os.path.realpath(__file__))
 
         # constants
         self.const = edict()
@@ -14,19 +14,21 @@ class Config:
 
         # engine
         self.engine = edict()
-        self.engine.data_path = os.path.join(PROJECT_ROOT, "model/data/engine.csv")
+        self.engine.data_path = os.path.join(self.PROJECT_ROOT,
+                                             "model/data/engine.csv")
         self.engine.n_idle = 750  # 怠速转速
         self.engine.Je = 0.2  # 飞轮转动惯量
 
         # fuel rate
         self.fuel_rate = edict()
-        self.fuel_rate.data_path = os.path.join(PROJECT_ROOT, "model/data/fuel_rate.csv")
+        self.fuel_rate.data_path = os.path.join(self.PROJECT_ROOT,
+                                                "model/data/fuel_rate.csv")
 
         # torque converter
         self.torque_converter = edict()
-        self.torque_converter.K_data_path = os.path.join(PROJECT_ROOT,
+        self.torque_converter.K_data_path = os.path.join(self.PROJECT_ROOT,
                                                          "model/data/torque_converter_K.csv")
-        self.torque_converter.Kp_data_path = os.path.join(PROJECT_ROOT,
+        self.torque_converter.Kp_data_path = os.path.join(self.PROJECT_ROOT,
                                                           "model/data/torque_converter_Kp.csv")
         self.torque_converter.np = self.engine.n_idle  # 泵轮转速
         self.torque_converter.nt = 0  # 涡轮转速
@@ -37,9 +39,9 @@ class Config:
         self.transmission.i = 5  # 档位，1~7
         self.transmission.gears = [4.38, 2.86, 1.92, 1.37, 1.00, 0.82, 0.70]  # 传动比
         self.transmission.effs = [0.92, 0.92, 0.95, 0.95, 0.98, 0.99, 0.99]  # 效率
-        self.transmission.up_shift_data_path = os.path.join(PROJECT_ROOT,
+        self.transmission.up_shift_data_path = os.path.join(self.PROJECT_ROOT,
                                                 "model/data/transmission_up_shift.csv")  # 向上换挡规律
-        self.transmission.down_shift_data_path = os.path.join(PROJECT_ROOT,
+        self.transmission.down_shift_data_path = os.path.join(self.PROJECT_ROOT,
                                                 "model/data/transmission_down_shift.csv")  # 向下换挡规律
 
         # vehicle
@@ -68,9 +70,9 @@ class Config:
         self.vehicle.rou = 1.206  # 空气密度
         self.vehicle.A = 1.6  # 迎风面积
         self.vehicle.f = 0.005  # 滚动阻力系数
-        self.vehicle.linear_vehicle_params = os.path.join(PROJECT_ROOT,
+        self.vehicle.linear_vehicle_params = os.path.join(self.PROJECT_ROOT,
                                                     "model/data/linear_vehicle_params.npy")
-        self.vehicle.fuel_rate_params = os.path.join(PROJECT_ROOT,
+        self.vehicle.fuel_rate_params = os.path.join(self.PROJECT_ROOT,
                                                      "model/data/fuel_rate_params.npy")
         self.vehicle.veh_alpha_split_points = [0.15, 0.55]  # 用于汽车模型分段线性化的节气门开度的分段点
         self.vehicle.fr_alpha_split_points = [0.6]  # 用于油耗模型分段线性化的节气门开度的分段点
@@ -96,7 +98,7 @@ class Config:
 
         # carsim data
         self.carsim = edict()
-        self.carsim.path = os.path.join(PROJECT_ROOT, "data/carsim/")
+        self.carsim.path = os.path.join(self.PROJECT_ROOT, "data/carsim/")
         self.carsim.files = os.listdir(self.carsim.path)
 
 
