@@ -18,10 +18,10 @@ def get_v_des(t, const_v=0):
 if __name__ == "__main__":
     # speed
     CONST_V = [20, 40, 100]
-    const_v = CONST_V[0]
+    const_v = CONST_V[2]
 
     # slope
-    max_slope = 0
+    max_slope = 2
 
     # controller name
     CTRL_NAME = ["PID", "LQR"]
@@ -49,7 +49,6 @@ if __name__ == "__main__":
                                     alpha=alpha,
                                     Pb=Pb,
                                     n=vehicle.vehicle.engine.n)
-        # print(f"dv: {v-v_des}, alpha: {alpha}, Pb: {Pb}")
         vehicle.control(alpha, Pb)
         vehicle.step(slope)
         t += cfg.const.dt

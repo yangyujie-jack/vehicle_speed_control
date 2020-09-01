@@ -46,19 +46,15 @@ class Config:
 
         # vehicle
         self.vehicle = edict()
-        self.vehicle.v = 0
-        self.vehicle.alpha = 0
-        self.vehicle.Pb = 0
+        # self.vehicle.v = 0
+        # self.vehicle.alpha = 0
+        # self.vehicle.Pb = 0
         self.vehicle.alpha_bounds = [0.0, 1.0]
         self.vehicle.Pb_bounds = [0.0, 3.0]  # MPa
         self.vehicle.d_alpha = (self.vehicle.alpha_bounds[1] -
                                 self.vehicle.alpha_bounds[0]) / 0.5 * self.const.dt  # dt内的最大变化量
         self.vehicle.d_Pb = (self.vehicle.Pb_bounds[1] -
                              self.vehicle.Pb_bounds[0]) / 0.5 * self.const.dt
-        # self.vehicle.alpha_thresh = 0.1 * (self.vehicle.alpha_bounds[1] -
-        #                                    self.vehicle.alpha_bounds[0])  # 油门/制动切换阈值
-        # self.vehicle.Pb_thresh = 0.1 * (self.vehicle.Pb_bounds[1] -
-        #                                self.vehicle.Pb_bounds[0])
         self.vehicle.m = 1416  # 整车质量
         self.vehicle.Jf = 1.8  # 前轴转动惯量
         self.vehicle.Jr = 1.8  # 后轴转动惯量
@@ -86,6 +82,7 @@ class Config:
 
         # lqr
         self.controller.lqr = edict()
+        self.controller.lqr.consider_fr = False  # 是否考虑油耗
         self.controller.lqr.Q1 = 1  # 速度误差系数
         self.controller.lqr.Q2 = 0  # 油耗系数, 600,600,100
         self.controller.lqr.R_alpha = 0.1

@@ -18,6 +18,7 @@ class LQRController(BaseController):
         self.R_Pb = self.config.controller.lqr.R_Pb
         self.linear_vehicle = LinearVehicle(self.config)
         self.fr = FuelRate(self.config)
+        self.consider_fr = self.config.controller.lqr.consider_fr
 
     # def step(self, mode, v, v_des, **kwargs):
     #     slope = 0  # 路面坡度未知，用0计算
@@ -68,13 +69,11 @@ class LQRController(BaseController):
     #     return alpha, Pb
 
     def step(self, mode, v, v_des, **kwargs):
-        slope = 0  # 路面坡度未知，用0计算
         alpha0 = kwargs['alpha']
-        n = kwargs['n']
         if mode == 0:
             alpha, Pb = 0, 0
         else:
-            Kv = self.linear_vehicle.get_vehicle_param(slope, alpha0)
+            Kv = self.linear_vehicle.get_vehicle_params(alpha0)
             A = Kv[0]
             B = Kv[1] if mode == 1 else self.B_Pb
             B1 = Kv[2]
@@ -109,23 +108,25 @@ class LQRController(BaseController):
                 alpha0 = np.clip(u, self.config.vehicle.alpha_bounds[0],
                                 self.config.vehicle.alpha_bounds[1])
                 alpha = alpha0
-                max_delta_alpha = 0.5
-                ah = min(self.config.vehicle.alpha_bounds[1], alpha0+max_delta_alpha)
-                al = max(self.config.vehicle.alpha_bounds[0], alpha0-max_delta_alpha)
-                max_iter = 10
-                tol = 1e-3
-                for _ in range(max_iter):
-                    dfr = self.fr.get_dfr(n, alpha)
-                    # 求解Xi
-                    _a = P * B ** 2 / R - A
-                    _b = P * B1 - Q1 * v_des - P*B*Q2*dfr/R
-                    Xi = -_b / _a
-                    _alpha = -((P*v-Xi)*B+Q2*dfr)/R
-                    _alpha = np.clip(_alpha, al, ah)
-                    if abs(alpha-_alpha) < tol:
+                if self.consider_fr:
+                    n = kwargs['n']
+                    max_delta_alpha = 0.5
+                    ah = min(self.config.vehicle.alpha_bounds[1], alpha0+max_delta_alpha)
+                    al = max(self.config.vehicle.alpha_bounds[0], alpha0-max_delta_alpha)
+                    max_iter = 10
+                    tol = 1e-3
+                    for _ in range(max_iter):
+                        dfr = self.fr.get_dfr(n, alpha)
+                        # 求解Xi
+                        _a = P * B ** 2 / R - A
+                        _b = P * B1 - Q1 * v_des - P*B*Q2*dfr/R
+                        Xi = -_b / _a
+                        _alpha = -((P*v-Xi)*B+Q2*dfr)/R
+                        _alpha = np.clip(_alpha, al, ah)
+                        if abs(alpha-_alpha) < tol:
+                            alpha = _alpha
+                            break
                         alpha = _alpha
-                        break
-                    alpha = _alpha
         return alpha, Pb
 
     def get_estimate_fr(self, v, alpha):

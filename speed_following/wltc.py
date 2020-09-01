@@ -55,7 +55,7 @@ if __name__ == "__main__":
     plt.show()
 
     # 节气门开度和制动压力
-    alphas, Pbs = vehicle.get_alphas_Pbs()
+    alphas, Pbs = vehicle.get_controls()
     plt.subplot(2, 1, 1)
     plt.plot(ts, alphas)
     plt.xlabel("t/s")

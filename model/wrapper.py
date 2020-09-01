@@ -1,9 +1,9 @@
+from model.params import dt
 
 
 class MonitorVehicle:
     def __init__(self, vehicle):
         self.vehicle = vehicle
-        self._dt = self.vehicle.config.const.dt
         self._vs = []
         self._alphas = []
         self._Pbs = []
@@ -18,18 +18,25 @@ class MonitorVehicle:
         self._vs.append(self.vehicle.v)
         self._alphas.append(self.vehicle.alpha)
         self._Pbs.append(self.vehicle.Pb)
-        self._s += self.vehicle.v*self._dt
+        self._s += self.vehicle.v*dt
         # fr = self.vehicle.get_fuel_rate()
         # self._fuel_csp += fr*self._dt
 
     def get_v(self):
         return self.vehicle.v
 
-    def get_vs(self):
-        return self._vs
+    def set_v(self, v):
+        self.vehicle.v = float(v)
+
+    def set_control(self, alpha, Pb):
+        self.vehicle.alpha = float(alpha)
+        self.vehicle.Pb = float(Pb)
 
     def get_control(self):
         return self.vehicle.alpha, self.vehicle.Pb
+
+    def get_vs(self):
+        return self._vs
 
     def get_controls(self):
         return self._alphas, self._Pbs
@@ -39,9 +46,6 @@ class MonitorVehicle:
 
     def get_fuel_scp(self):
         return self._fuel_csp
-
-    def get_alphas_Pbs(self):
-        return self._alphas, self._Pbs
 
     def get_fuel_rate(self):
         return self.vehicle.get_fuel_rate()

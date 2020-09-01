@@ -1,12 +1,8 @@
 from scipy import optimize
 from model import LinearVehicle
 import numpy as np
-import time
 from controller.base import BaseController
-from controller.pid import PIDController
-
-
-DEBUG = True
+from controller.lqr import LQRController
 
 
 class MPCController(BaseController):
@@ -16,7 +12,7 @@ class MPCController(BaseController):
         self.n_pred = self.config.controller.mpc.n_pred
         self.gamma = 1.0
         self.vehicle = LinearVehicle(self.config)
-        self.pid = PIDController(self.config)
+        self.controller = LQRController(self.config)
         METHODS = ['SLSQP', 'trust-constr']
         self.method = METHODS[0]
         self._build_constraints()
@@ -28,64 +24,50 @@ class MPCController(BaseController):
         A = np.identity(self.n_pred*2)
         self.cons = optimize.LinearConstraint(A, lb, ub)
 
-    def target_func(self, x, *args):
-        t1 = time.time()
-
+    def _target_func(self, x, *args):
         alphas = x[:self.n_pred]
         Pbs = x[self.n_pred:]
-        v, v_dess, alpha0, Pb0 = args
-        self.vehicle.set_v(v)
-        self.vehicle.set_control(alpha0, Pb0)
+        v0, v_dess, alpha0, Pb0 = args
+        self.vehicle.v = float(v0)
+        self.vehicle.alpha = float(alpha0)
+        self.vehicle.Pb = float(Pb0)
         targ_f = 0
         for alpha, Pb, v_des in zip(alphas, Pbs, v_dess):
             self.vehicle.control(alpha, Pb)
-
-            t2 = time.time()
             self.vehicle.step()
-            self.step_t += time.time()-t2
-
             targ_f = (self.vehicle.v-v_des)**2*self.dt + self.gamma*targ_f
-
-        self.t += time.time()-t1
-        # self.call_num += 1
-
         return targ_f
 
-    def get_init_control(self, v0, v_dess, alpha0, Pb0):
+    def _get_init_control(self, v0, v_dess, alpha0, Pb0):
         """
         control using PID
         """
         alphas = []
         Pbs = []
-        self.vehicle.set_v(v0)
-        self.vehicle.set_control(alpha0, Pb0)
+        self.vehicle.v = float(v0)
+        self.vehicle.alpha = float(alpha0)
+        self.vehicle.Pb = float(Pb0)
         for i in range(self.n_pred):
-            v = self.vehicle.get_v()
-            alpha, Pb = self.vehicle.get_control()
-            mode = self.pid.get_mode(v, v_dess[i], alpha, Pb)
-            alpha, Pb = self.pid.step(mode, v, v_dess[i])
+            v = self.vehicle.v
+            alpha, Pb = self.vehicle.alpha, self.vehicle.Pb
+            mode = self.controller.get_mode(v, v_dess[i], alpha, Pb)
+            alpha, Pb = self.controller.step(mode, v, v_dess[i], alpha=alpha)
             alphas.append(alpha)
             Pbs.append(Pb)
             self.vehicle.control(alpha, Pb)
-            self.vehicle.step(0)
+            self.vehicle.step()
         return np.array(alphas+Pbs)
 
-    def pred_control(self, mode, v, v_dess, alpha, Pb):
-        control0 = self.get_init_control(v, v_dess, alpha, Pb)
+    def _pred_control(self, mode, v, v_dess, alpha, Pb):
+        control0 = self._get_init_control(v, v_dess, alpha, Pb)
         self.t = 0
         self.step_t = 0
-        # self.call_num = 0
-        # t1 = time.time()
-        res = optimize.minimize(self.target_func,
+        res = optimize.minimize(self._target_func,
                                 x0=control0,
                                 args=(v, v_dess, alpha, Pb),
                                 method=self.method,
                                 constraints=self.cons,
                                 options={})
-        # t2 = time.time()
-        # print(f"total time {self.t}, "
-        #       f"step time {self.step_t}")
-
         if res.success:
             alpha, Pb = res.x[0], res.x[self.n_pred]
             return alpha, Pb
@@ -95,4 +77,4 @@ class MPCController(BaseController):
     def step(self, mode, v, v_des, **kwargs):
         alpha = kwargs['alpha']
         Pb = kwargs['Pb']
-        return self.pred_control(mode, v, v_des, alpha, Pb)
+        return self._pred_control(mode, v, v_des, alpha, Pb)
