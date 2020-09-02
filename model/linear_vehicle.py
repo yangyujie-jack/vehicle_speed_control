@@ -1,6 +1,5 @@
 import numpy as np
 from ctypes import *
-from model.params import *
 from model.base_vehicle import BaseVehicle
 
 
@@ -57,6 +56,10 @@ class LinearVehicle(BaseVehicle):
         ari = self.dll.LV_get_alpha_range_index(self, c_double(alpha))
         return self.vehicle_params[ari][:]
 
+    def update_acc(self, slope):
+        # TODO C++ function
+        pass
+
     def step(self, slope=0):
         # TODO C++ function
-        self.dll.LV_step(self)
+        pass

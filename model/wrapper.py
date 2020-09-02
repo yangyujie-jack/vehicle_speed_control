@@ -1,4 +1,3 @@
-from model.params import dt
 
 
 class MonitorVehicle:
@@ -18,7 +17,7 @@ class MonitorVehicle:
         self._vs.append(self.vehicle.v)
         self._alphas.append(self.vehicle.alpha)
         self._Pbs.append(self.vehicle.Pb)
-        self._s += self.vehicle.v*dt
+        self._s += self.vehicle.v*self.vehicle.config.const.dt
         # fr = self.vehicle.get_fuel_rate()
         # self._fuel_csp += fr*self._dt
 
