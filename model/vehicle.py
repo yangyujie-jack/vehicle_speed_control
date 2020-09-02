@@ -15,21 +15,21 @@ class Vehicle(BaseVehicle):
         self.torq_conv = TorqueConverter(config)
         self.m = config.vehicle.m
         self.Jf = config.vehicle.Jf
-        self.Jr = config.vehicle.vehicle.Jr
-        self.r = config.vehicle.vehicle.r
-        self.i0 = config.vehicle.vehicle.i0
-        self.eff0 = config.vehicle.vehicle.eff0
-        self.Kb = config.vehicle.vehicle.Kb
-        self.Cd = config.vehicle.vehicle.Cd
-        self.rou = config.vehicle.vehicle.rou
-        self.A = config.vehicle.vehicle.A
-        self.f = config.vehicle.vehicle.f
+        self.Jr = config.vehicle.Jr
+        self.r = config.vehicle.r
+        self.i0 = config.vehicle.i0
+        self.eff0 = config.vehicle.eff0
+        self.Kb = config.vehicle.Kb
+        self.Cd = config.vehicle.Cd
+        self.rou = config.vehicle.rou
+        self.A = config.vehicle.A
+        self.f = config.vehicle.f
         self.g = config.const.g
 
     def get_fuel_rate(self):
         return self.fuel_rate.get_fuel_rate(self.engine.n, self.alpha)
 
-    def update_acc(self, slope):
+    def _update_acc(self, slope):
         g = self.config.const.g
         Ff = self.f * self.m * g * np.cos(slope)  # 滚动阻力
         Fi = self.m * g * np.sin(slope)  # 坡度阻力
@@ -46,7 +46,7 @@ class Vehicle(BaseVehicle):
         self._acc = acc
 
     def step(self, slope=0):
-        self.update_acc(slope)
+        self._update_acc(slope)
         self.v += self._acc*self.config.const.dt  # 更新车速
         self.v = max(0, self.v)
         wt = self.v / self.r * self.i0 * self.trans.gears[self.trans.i-1]
@@ -58,7 +58,9 @@ if __name__ == '__main__':
 
     cfg = Config()
     veh = Vehicle(cfg)
-    for _ in range(1000):
+    t = 0
+    while t < 20:
         veh.control(1, 0)
         veh.step()
+        t += cfg.const.dt
         print(veh.v)

@@ -25,7 +25,7 @@ if __name__ == "__main__":
 
     # controller name
     CTRL_NAME = ["PID", "LQR"]
-    ctrl_name = CTRL_NAME[1]
+    ctrl_name = CTRL_NAME[0]
 
     cfg = Config()
     T = 1e4/(const_v/3.6)

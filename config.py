@@ -6,6 +6,11 @@ class Config:
     def __init__(self):
         self.project_root = os.path.dirname(os.path.realpath(__file__))
 
+        # constants
+        self.const = edict()
+        self.const.dt = 0.025  # 仿真步长
+        self.const.g = 9.8
+
         # controller
         controller_names = ["PID", "LQR", "MPC"]
         self.controller = edict()
@@ -43,6 +48,9 @@ class Config:
         self.vehicle.rou = 1.206  # 空气密度
         self.vehicle.A = 1.6  # 迎风面积
         self.vehicle.f = 0.005  # 滚动阻力系数
+        self.vehicle.k_Pb = -self.vehicle.Kb / self.vehicle.r / \
+                            (self.vehicle.m + (self.vehicle.Jf + self.vehicle.Jr) /
+                             self.vehicle.r ** 2)
         self.vehicle.linear_vehicle_params = os.path.join(self.project_root,
                                                     "model/data/linear_vehicle_params.npy")
         self.vehicle.fuel_rate_params = os.path.join(self.project_root,
@@ -85,11 +93,6 @@ class Config:
         self.carsim = edict()
         self.carsim.path = os.path.join(self.project_root, "data/carsim/")
         self.carsim.files = os.listdir(self.carsim.path)
-
-        # constants
-        self.const = edict()
-        self.const.dt = 0.025  # 仿真步长
-        self.const.g = 9.8
 
 
 if __name__ == '__main__':
