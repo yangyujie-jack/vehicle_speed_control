@@ -91,7 +91,7 @@ class Config:
 
         # mpc
         self.controller.mpc = edict()
-        self.controller.mpc.n_pred = 10
+        self.controller.mpc.n_pred = 1
 
         # carsim data
         self.carsim = edict()

@@ -1,4 +1,4 @@
-from model import Vehicle, MonitorVehicle, get_slope
+from model import Vehicle, LinearVehicle, MonitorVehicle, get_slope
 from config import Config
 from utils import *
 import numpy as np
@@ -25,13 +25,14 @@ if __name__ == "__main__":
     max_slope = 0
 
     cfg = Config()
-    T = 1e4/(const_v/3.6)
-    vehicle = MonitorVehicle(Vehicle(cfg))
+    T = 1e3/(const_v/3.6)
+    # vehicle = MonitorVehicle(Vehicle(cfg))
+    vehicle = MonitorVehicle(LinearVehicle(cfg))
     controller = get_controller("MPC", cfg)
     t = 0
     v_dess = []
     while t < T:
-        print(f"\r{format(t, '.2f')}/{format(T, '.2f')}", end='')
+        # print(f"\r{format(t, '.2f')}/{format(T, '.2f')}", end='')
 
         next_v_dess = []
         for i in range(controller.n_pred):

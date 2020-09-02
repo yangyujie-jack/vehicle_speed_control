@@ -3,6 +3,7 @@ from model import LinearVehicle
 import numpy as np
 from controller.base import BaseController
 from controller.lqr import LQRController
+from controller.pid import PIDController
 
 
 class MPCController(BaseController):
@@ -12,7 +13,7 @@ class MPCController(BaseController):
         self.n_pred = self.config.controller.mpc.n_pred
         self.gamma = 1.0
         self.vehicle = LinearVehicle(self.config)
-        self.controller = LQRController(self.config)
+        self.controller = PIDController(self.config)
         METHODS = ['SLSQP', 'trust-constr']
         self.method = METHODS[0]
         self._build_constraints()
@@ -23,6 +24,7 @@ class MPCController(BaseController):
                              np.ones(self.n_pred)*self.Pb_bounds[1]])
         A = np.identity(self.n_pred*2)
         self.cons = optimize.LinearConstraint(A, lb, ub)
+        self.bounds = np.concatenate((lb[:, np.newaxis], ub[:, np.newaxis]), 1)
 
     def _target_func(self, x, *args):
         alphas = x[:self.n_pred]
@@ -36,6 +38,7 @@ class MPCController(BaseController):
             self.vehicle.control(alpha, Pb)
             self.vehicle.step()
             targ_f = (self.vehicle.v-v_des)**2*self.dt + self.gamma*targ_f
+        # print(f"target func value: {targ_f}")
         return targ_f
 
     def _get_init_control(self, v0, v_dess, alpha0, Pb0):
@@ -59,15 +62,22 @@ class MPCController(BaseController):
         return np.array(alphas+Pbs)
 
     def _pred_control(self, mode, v, v_dess, alpha, Pb):
-        control0 = self._get_init_control(v, v_dess, alpha, Pb)
+        # control0 = self._get_init_control(v, v_dess, alpha, Pb)
+        control0 = np.zeros(self.n_pred*2)
+        # return control0[0], control0[self.n_pred]
         self.t = 0
         self.step_t = 0
-        res = optimize.minimize(self._target_func,
+        # print("\n--optimize--\n")
+        res = optimize.minimize(fun=self._target_func,
                                 x0=control0,
                                 args=(v, v_dess, alpha, Pb),
                                 method=self.method,
-                                constraints=self.cons,
+                                bounds=self.bounds,
                                 options={})
+        # res = optimize.dual_annealing(func=self._target_func,
+        #                               x0=control0,
+        #                               args=(v, v_dess, alpha, Pb),
+        #                               bounds=self.bounds)
         if res.success:
             alpha, Pb = res.x[0], res.x[self.n_pred]
             return alpha, Pb
