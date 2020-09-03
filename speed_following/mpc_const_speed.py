@@ -22,17 +22,16 @@ if __name__ == "__main__":
     const_v = CONST_V[2]
 
     # slope
-    max_slope = 0
+    max_slope = 2
 
     cfg = Config()
-    T = 1e3/(const_v/3.6)
-    # vehicle = MonitorVehicle(Vehicle(cfg))
-    vehicle = MonitorVehicle(LinearVehicle(cfg))
+    T = 1e4/(const_v/3.6)
+    vehicle = MonitorVehicle(Vehicle(cfg))
     controller = get_controller("MPC", cfg)
     t = 0
     v_dess = []
     while t < T:
-        # print(f"\r{format(t, '.2f')}/{format(T, '.2f')}", end='')
+        print(f"\r{format(t, '.2f')}/{format(T, '.2f')}", end='')
 
         next_v_dess = []
         for i in range(controller.n_pred):
@@ -63,7 +62,7 @@ if __name__ == "__main__":
     plt.plot(ts, vs*3.6, label="v")
     plt.xlabel("t/s")
     plt.ylabel("v/(km/h)")
-    # plt.ylim([const_v-20, const_v+20])
+    plt.ylim([const_v-20, const_v+20])
     plt.legend()
     plt.show()
 

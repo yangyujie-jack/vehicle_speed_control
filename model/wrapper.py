@@ -13,13 +13,14 @@ class MonitorVehicle:
         self.vehicle.control(alpha, Pb)
 
     def step(self, slope=0):
+        dt = self.vehicle.config.const.dt
         self.vehicle.step(slope)
         self._vs.append(self.vehicle.v)
         self._alphas.append(self.vehicle.alpha)
         self._Pbs.append(self.vehicle.Pb)
-        self._s += self.vehicle.v*self.vehicle.config.const.dt
-        # fr = self.vehicle.get_fuel_rate()
-        # self._fuel_csp += fr*self._dt
+        self._s += self.vehicle.v*dt
+        fr = self.vehicle.get_fuel_rate()
+        self._fuel_csp += fr*dt
 
     def get_v(self):
         return self.vehicle.v

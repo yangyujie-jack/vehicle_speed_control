@@ -13,7 +13,7 @@ class MPCController(BaseController):
         self.n_pred = self.config.controller.mpc.n_pred
         self.gamma = 1.0
         self.vehicle = LinearVehicle(self.config)
-        self.controller = PIDController(self.config)
+        self.controller = LQRController(self.config)
         METHODS = ['SLSQP', 'trust-constr']
         self.method = METHODS[0]
         self._build_constraints()
@@ -30,29 +30,25 @@ class MPCController(BaseController):
         alphas = x[:self.n_pred]
         Pbs = x[self.n_pred:]
         v0, v_dess, alpha0, Pb0 = args
-        self.vehicle.v = float(v0)
-        self.vehicle.alpha = float(alpha0)
-        self.vehicle.Pb = float(Pb0)
+        self.vehicle.set_v(v0)
+        self.vehicle.set_control(alpha0, Pb0)
         targ_f = 0
         for alpha, Pb, v_des in zip(alphas, Pbs, v_dess):
             self.vehicle.control(alpha, Pb)
             self.vehicle.step()
-            targ_f = (self.vehicle.v-v_des)**2*self.dt + self.gamma*targ_f
+            targ_f = (self.vehicle.get_v()-v_des)**2*self.config.const.dt + \
+                     self.gamma*targ_f
         # print(f"target func value: {targ_f}")
         return targ_f
 
     def _get_init_control(self, v0, v_dess, alpha0, Pb0):
-        """
-        control using PID
-        """
         alphas = []
         Pbs = []
-        self.vehicle.v = float(v0)
-        self.vehicle.alpha = float(alpha0)
-        self.vehicle.Pb = float(Pb0)
+        self.vehicle.set_v(v0)
+        self.vehicle.set_control(alpha0, Pb0)
         for i in range(self.n_pred):
-            v = self.vehicle.v
-            alpha, Pb = self.vehicle.alpha, self.vehicle.Pb
+            v = self.vehicle.get_v()
+            alpha, Pb = self.vehicle.get_control()
             mode = self.controller.get_mode(v, v_dess[i], alpha, Pb)
             alpha, Pb = self.controller.step(mode, v, v_dess[i], alpha=alpha)
             alphas.append(alpha)
@@ -62,8 +58,8 @@ class MPCController(BaseController):
         return np.array(alphas+Pbs)
 
     def _pred_control(self, mode, v, v_dess, alpha, Pb):
-        # control0 = self._get_init_control(v, v_dess, alpha, Pb)
-        control0 = np.zeros(self.n_pred*2)
+        control0 = self._get_init_control(v, v_dess, alpha, Pb)
+        # control0 = np.zeros(self.n_pred*2)
         # return control0[0], control0[self.n_pred]
         self.t = 0
         self.step_t = 0
@@ -73,7 +69,7 @@ class MPCController(BaseController):
                                 args=(v, v_dess, alpha, Pb),
                                 method=self.method,
                                 bounds=self.bounds,
-                                options={})
+                                options={'ftol': 1e-8})
         # res = optimize.dual_annealing(func=self._target_func,
         #                               x0=control0,
         #                               args=(v, v_dess, alpha, Pb),

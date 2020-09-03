@@ -21,7 +21,7 @@ class LinearVehicle(BaseVehicle):
         Kb = self.config.vehicle.Kb
         g = self.config.const.g
         M = m+(Jf+Jr)/r**2
-        self.k_Pb = ctypes.c_double(Kb/(r*M))
+        self.k_Pb = ctypes.c_double(-Kb/(r*M))
         self.k_Fi = ctypes.c_double(-m*g/M)
 
         # step
