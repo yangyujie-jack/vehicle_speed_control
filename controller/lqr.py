@@ -68,8 +68,14 @@ class LQRController(BaseController):
     #                      self.config.vehicle.Pb_bounds[1])
     #     return alpha, Pb
 
-    def step(self, mode, v, v_des, **kwargs):
+    def step(self, v, v_dess, **kwargs):
+        """
+        基于一阶导数的算法
+        """
+        v_des = v_dess[0]
         alpha0 = kwargs['alpha']
+        Pb0 = kwargs['Pb']
+        mode = self.get_mode(v, v_des, alpha0, Pb0)
         if mode == 0:
             alpha, Pb = 0, 0
         else:
@@ -128,9 +134,3 @@ class LQRController(BaseController):
                             break
                         alpha = _alpha
         return alpha, Pb
-
-    def get_estimate_fr(self, v, alpha):
-        [C6, C5, C4, C2, C3, C1] = \
-            self.linear_vehicle.get_fuel_rate_param(alpha, v)  # (1,u,v,u^2,uv,v^2)
-        fr = C6 + C5 * alpha + C4 * v + C3 * alpha ** 2 + C2 * alpha * v + C1 * v ** 2
-        return fr

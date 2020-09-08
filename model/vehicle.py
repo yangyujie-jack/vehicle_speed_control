@@ -52,6 +52,9 @@ class Vehicle(BaseVehicle):
         wt = self.v / self.r * self.i0 * self.trans.gears[self.trans.i-1]
         self.torq_conv.nt = wt*60/(2*np.pi)  # 更新涡轮转速
 
+    def get_engine_n(self):
+        return self.engine.n
+
 
 if __name__ == '__main__':
     from config import Config

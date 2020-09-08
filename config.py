@@ -12,9 +12,7 @@ class Config:
         self.const.g = 9.8
 
         # controller
-        controller_names = ["PID", "LQR", "MPC"]
         self.controller = edict()
-        self.controller.name = controller_names[2]
         self.controller.v_tol = 0.1  # 节气门/制动切换允许的误差, m/s
 
         # lqr
@@ -27,7 +25,7 @@ class Config:
 
         # mpc
         self.controller.mpc = edict()
-        self.controller.mpc.n_pred = 1
+        self.controller.mpc.n_pred = 5
 
         # vehicle
         self.vehicle = edict()

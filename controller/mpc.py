@@ -3,7 +3,7 @@ from model import LinearVehicle
 import numpy as np
 from controller.base import BaseController
 from controller.lqr import LQRController
-from controller.pid import PIDController
+import ctypes
 
 
 class MPCController(BaseController):
@@ -17,29 +17,37 @@ class MPCController(BaseController):
         METHODS = ['SLSQP', 'trust-constr']
         self.method = METHODS[0]
         self._build_constraints()
+        self._build_mpc_c_funcs()
 
     def _build_constraints(self):
         lb = np.zeros(self.n_pred*2)
         ub = np.concatenate([np.ones(self.n_pred)*self.alpha_bounds[1],
                              np.ones(self.n_pred)*self.Pb_bounds[1]])
-        A = np.identity(self.n_pred*2)
-        self.cons = optimize.LinearConstraint(A, lb, ub)
         self.bounds = np.concatenate((lb[:, np.newaxis], ub[:, np.newaxis]), 1)
 
+    def _build_mpc_c_funcs(self):
+        self.dll = ctypes.CDLL(self.config.project_root + "/model/vehicle.dll")
+        self._c_target_func = self.dll.mpc_target_func
+        self._c_target_func.restype = ctypes.c_double
+        self._veh_params = self.vehicle.vehicle_params.ctypes
+        self._veh_alpha_sp = (ctypes.c_double*2)(*self.vehicle.veh_alpha_split_points)
+        self.c_n_pred = ctypes.c_int(self.n_pred)
+        self.c_dt = ctypes.c_double(self.dt)
+
+
     def _target_func(self, x, *args):
-        alphas = x[:self.n_pred]
-        Pbs = x[self.n_pred:]
         v0, v_dess, alpha0, Pb0 = args
-        self.vehicle.set_v(v0)
-        self.vehicle.set_control(alpha0, Pb0)
-        targ_f = 0
-        for alpha, Pb, v_des in zip(alphas, Pbs, v_dess):
-            self.vehicle.control(alpha, Pb)
-            self.vehicle.step()
-            targ_f = (self.vehicle.get_v()-v_des)**2*self.config.const.dt + \
-                     self.gamma*targ_f
-        # print(f"target func value: {targ_f}")
-        return targ_f
+        x = x.ctypes
+        v_dess = (ctypes.c_double*self.n_pred)(*v_dess)
+        v0 = ctypes.c_double(v0)
+        alpha0 = ctypes.c_double(alpha0)
+        Pb0 = ctypes.c_double(Pb0)
+        target_func = self._c_target_func(x, v_dess, self.c_n_pred, v0, alpha0, Pb0,
+            self.vehicle.alpha_bounds, self.vehicle.Pb_bounds, self.vehicle.d_alpha,
+            self.vehicle.d_Pb, self._veh_params, self._veh_alpha_sp,
+            self.vehicle.k_Pb, self.vehicle.k_Fi, self.c_dt)
+
+        return target_func
 
     def _get_init_control(self, v0, v_dess, alpha0, Pb0):
         alphas = []
@@ -49,38 +57,30 @@ class MPCController(BaseController):
         for i in range(self.n_pred):
             v = self.vehicle.get_v()
             alpha, Pb = self.vehicle.get_control()
-            mode = self.controller.get_mode(v, v_dess[i], alpha, Pb)
-            alpha, Pb = self.controller.step(mode, v, v_dess[i], alpha=alpha)
+            alpha, Pb = self.controller.step(v, v_dess[i:i+1], alpha=alpha, Pb=Pb)
             alphas.append(alpha)
             Pbs.append(Pb)
             self.vehicle.control(alpha, Pb)
             self.vehicle.step()
         return np.array(alphas+Pbs)
 
-    def _pred_control(self, mode, v, v_dess, alpha, Pb):
+    def _pred_control(self, v, v_dess, alpha, Pb):
         control0 = self._get_init_control(v, v_dess, alpha, Pb)
         # control0 = np.zeros(self.n_pred*2)
         # return control0[0], control0[self.n_pred]
-        self.t = 0
-        self.step_t = 0
-        # print("\n--optimize--\n")
         res = optimize.minimize(fun=self._target_func,
                                 x0=control0,
                                 args=(v, v_dess, alpha, Pb),
                                 method=self.method,
                                 bounds=self.bounds,
                                 options={'ftol': 1e-8})
-        # res = optimize.dual_annealing(func=self._target_func,
-        #                               x0=control0,
-        #                               args=(v, v_dess, alpha, Pb),
-        #                               bounds=self.bounds)
         if res.success:
             alpha, Pb = res.x[0], res.x[self.n_pred]
             return alpha, Pb
         else:
             raise RuntimeError("MPC optimize solver can't find solution!")
 
-    def step(self, mode, v, v_des, **kwargs):
+    def step(self, v, v_dess, **kwargs):
         alpha = kwargs['alpha']
         Pb = kwargs['Pb']
-        return self._pred_control(mode, v, v_des, alpha, Pb)
+        return self._pred_control(v, v_dess, alpha, Pb)
